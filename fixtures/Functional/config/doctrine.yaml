@@ -1,0 +1,5 @@
+doctrine:
+    dbal:
+        url: 'mysql://root:password@127.0.0.1:3307/alice_fixtures_dumper?serverVersion=8.0'
+    orm:
+        auto_mapping: true

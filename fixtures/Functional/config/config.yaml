@@ -1,0 +1,13 @@
+parameters:
+    test_app.random: 'Random parameter'
+
+framework:
+    secret: test
+    test: ~
+    http_method_override: false
+
+services:
+    _defaults:
+        public: true
+    logger:
+        class: Psr\Log\NullLogger

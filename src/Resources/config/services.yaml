@@ -1,0 +1,83 @@
+services:
+    alice_fixtures_dumper.command.dump:
+        class: ITakSoydet\AliceFixturesDumperBundle\Command\DumpCommand
+        arguments:
+            - '@alice_fixtures_dumper.dumper'
+        tags:
+            -   name: console.command
+
+    ### > dumper
+    alice_fixtures_dumper.dumper:
+        class: ITakSoydet\AliceFixturesDumperBundle\Dumper\Dumper
+        arguments:
+            - '@alice_fixtures_dumper.locator.environmentless'
+            - '@alice_fixtures_dumper.data_fixtures.loader'
+            - '@logger'
+
+    ### < dumper
+
+    ### > locator
+    alice_fixtures_dumper.locator.environmentless:
+        class: Hautelook\AliceBundle\Locator\EnvironmentlessFilesLocator
+        public: true
+        arguments:
+            - '@alice_fixtures_dumper.locator.env_directory'
+
+    alice_fixtures_dumper.locator.env_directory:
+        class: Hautelook\AliceBundle\Locator\EnvDirectoryLocator
+        public: true
+        arguments:
+            - '%alice_fixtures_dumper.fixtures_path%'
+            - '%alice_fixtures_dumper.root_dirs%'
+
+    ### < locator
+
+    ### > loader
+    alice_fixtures_dumper.data_fixtures.loader:
+        class: Fidry\AliceDataFixtures\Loader\FileResolverLoader
+        arguments:
+            - '@alice_fixtures_dumper.data_fixtures.dumper_loader'
+            - '@hautelook_alice.resolver.file'
+            - '@logger'
+
+    alice_fixtures_dumper.data_fixtures.dumper_loader:
+        class: ITakSoydet\AliceFixturesDumperBundle\Loader\DumperLoader
+        arguments:
+            - '@fidry_alice_data_fixtures.loader.simple'
+            - '@alice_fixtures_dumper.persister.persister_to_yaml_file'
+            - '@logger'
+
+    alice_fixtures_dumper.loader.replace_id_generator:
+        class: ITakSoydet\AliceFixturesDumperBundle\Loader\ReplaceIdGeneratorLoader
+        decorates: fidry_alice_data_fixtures.loader.simple
+        arguments: [ '@.inner', '@doctrine.orm.entity_manager' ]
+
+    alice_fixtures_dumper.doctrine.restart_sequences_persister_loader:
+        class: ITakSoydet\AliceFixturesDumperBundle\Loader\RestartSequencesPersisterLoader
+        decorates: fidry_alice_data_fixtures.doctrine.persister_loader
+        arguments: [ '@.inner', '@doctrine.orm.entity_manager' ]
+
+    ### < loader
+
+    ### > persister
+    alice_fixtures_dumper.yaml_decoder:
+        class: Symfony\Component\Yaml\Yaml
+
+    alice_fixtures_dumper.persister.persister_to_yaml_file:
+        class: ITakSoydet\AliceFixturesDumperBundle\Persister\SaveToYamlFilePersister
+        arguments:
+            - '@doctrine.orm.entity_manager'
+            - '@property_accessor'
+            - '@alice_fixtures_dumper.yaml_decoder'
+            - '@logger'
+
+    ### < persister
+
+
+    ### > hydrator
+    alice_fixtures_dumper.hydrator.property.id_property_hydrator:
+        class: ITakSoydet\AliceFixturesDumperBundle\Hydrator\Property\IdPropertyHydrator
+        decorates: nelmio_alice.generator.hydrator.property.symfony_property_access
+        arguments: [ '@.inner', '@doctrine.orm.entity_manager' ]
+
+    ### < hydrator
